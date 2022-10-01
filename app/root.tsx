@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   redirect,
   json,
@@ -8,13 +8,16 @@ import {
 } from "@remix-run/server";
 import {
   Form,
+  Link,
   Links,
   LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useHref,
   useLoaderData,
+  useLocation,
   useNavigate,
   useTransition as useNavigation,
   useSubmit,
@@ -61,6 +64,26 @@ function Root() {
   const submit = useSubmit();
   const navigate = useNavigate();
   const navigation = useNavigation();
+  const location = useLocation();
+  const optimisticLocation = navigation.location || location;
+  const optimisticSearchParams = new URLSearchParams(optimisticLocation.search);
+
+  const menuLink = useHref(
+    useMemo(() => {
+      const menuSearchParams = new URLSearchParams(optimisticLocation.search);
+      if (menuSearchParams.get("open") == "menu") {
+        menuSearchParams.delete("open");
+      } else {
+        menuSearchParams.set("open", "menu");
+      }
+
+      return {
+        hash: optimisticLocation.hash,
+        pathname: optimisticLocation.pathname,
+        search: menuSearchParams.toString(),
+      };
+    }, [optimisticLocation])
+  );
 
   const searching = navigation.location
     ? new URLSearchParams(navigation.location.search).has("q")
@@ -78,69 +101,113 @@ function Root() {
   return (
     <div id="root">
       <div id="sidebar">
-        <h1>React Router Contacts</h1>
-        <div>
-          <Form
-            id="search-form"
-            role="search"
-            onSubmit={(event) => {
-              if (firstContact) {
-                navigate(`/contacts/${firstContact.id}`, {
-                  replace: true,
-                  state: { takeFocus: true },
-                });
-                event.preventDefault();
-              }
-            }}
-          >
-            <input
-              id="q"
-              className={searching ? "loading" : ""}
-              onChange={(event) => {
-                let isFirstSearch = q == null;
-                submit(event.currentTarget.form, {
-                  replace: !isFirstSearch,
-                });
+        <Link to={menuLink}>
+          {optimisticSearchParams.get("open") == "menu" ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+              height={32}
+              width={32}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+              height={32}
+              width={32}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+              />
+            </svg>
+          )}
+        </Link>
+        <div
+          id="sidebar-content"
+          className={optimisticSearchParams.get("open") == "menu" ? "open" : ""}
+        >
+          <h1>
+            <span className="sr-only">Remix</span> Contacts
+          </h1>
+          <div>
+            <Form
+              id="search-form"
+              role="search"
+              onSubmit={(event) => {
+                if (firstContact) {
+                  navigate(`/contacts/${firstContact.id}`, {
+                    replace: true,
+                    state: { takeFocus: true },
+                  });
+                  event.preventDefault();
+                }
               }}
-              aria-label="Search contacts"
-              placeholder="Search"
-              type="search"
-              name="q"
-              defaultValue={q || undefined}
-            />
-            <div id="search-spinner" hidden={!searching} />
-            <div className="sr-only" aria-live="polite">
-              {q ? `${contacts.length} results for ${q}` : ""}
-            </div>
-          </Form>
-          <Form method="post">
-            <button type="submit">New</button>
-          </Form>
+            >
+              <input
+                id="q"
+                className={searching ? "loading" : ""}
+                onChange={(event) => {
+                  let isFirstSearch = q == null;
+                  submit(event.currentTarget.form, {
+                    replace: !isFirstSearch,
+                  });
+                }}
+                aria-label="Search contacts"
+                placeholder="Search"
+                type="search"
+                name="q"
+                defaultValue={q || undefined}
+              />
+              <div id="search-spinner" hidden={!searching} />
+              <div className="sr-only" aria-live="polite">
+                {q ? `${contacts.length} results for ${q}` : ""}
+              </div>
+            </Form>
+            <Form method="post">
+              <button type="submit">New</button>
+            </Form>
+          </div>
+          <nav>
+            <ul>
+              {contacts.map((contact) => (
+                <li key={contact.id}>
+                  <NavLink
+                    className={({ isActive, isPending }) =>
+                      isActive ? "active" : isPending ? "pending" : ""
+                    }
+                    to={`contacts/${contact.id}`}
+                    replace={q != null}
+                  >
+                    {contact.first || contact.last ? (
+                      <>
+                        {contact.first} {contact.last}
+                      </>
+                    ) : (
+                      <i>No Name</i>
+                    )}{" "}
+                    {contact.favorite && <span>★</span>}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-        <nav>
-          <ul>
-            {contacts.map((contact) => (
-              <li key={contact.id}>
-                <NavLink
-                  className={({ isActive, isPending }) =>
-                    isActive ? "active" : isPending ? "pending" : ""
-                  }
-                  to={`contacts/${contact.id}`}
-                  replace={q != null}
-                >
-                  {contact.first || contact.last ? (
-                    <>
-                      {contact.first} {contact.last}
-                    </>
-                  ) : (
-                    <i>No Name</i>
-                  )}{" "}
-                  {contact.favorite && <span>★</span>}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </div>
       <div id="detail" className={navigation.state !== "idle" ? "loading" : ""}>
         {firstContact ? <Contact contact={firstContact} /> : <Outlet />}

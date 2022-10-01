@@ -46,9 +46,16 @@
             return;
           }
 
-          registration.addEventListener("updatefound", (event) => {
-            installing = registration.installing || registration.waiting;
-            handleStateChange(installing, installing.state);
+          registration.addEventListener("updatefound", () => {
+            let installing = registration.installing;
+            let waiting = registration.waiting;
+            if (installing) {
+              installing.addEventListener("statechange", () => {
+                handleStateChange(installing, installing.state);
+              });
+            } else if (waiting) {
+              reload();
+            }
           });
         })
         .catch((err) => {

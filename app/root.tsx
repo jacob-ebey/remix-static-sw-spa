@@ -34,12 +34,14 @@ import stylesHref from "./styles.css";
 
 export let meta: MetaFunction = () => ({
   charset: "utf-8",
-  title: "New Remix App",
+  title: "Remix Contacts",
   viewport: "width=device-width,initial-scale=1",
+  "theme-color": "#f7f7f7",
 });
 
 export let links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesHref },
+  { rel: "manifest", href: "/manifest.webmanifest" },
 ];
 
 export async function action() {

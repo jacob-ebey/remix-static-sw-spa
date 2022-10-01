@@ -1,0 +1,14 @@
+{
+  "name": "Remix Contacts",
+  "short_name": "Remix Contacts",
+  "icons": [
+    {
+      "src": "/800x800-Glowing.png",
+      "sizes": "800x800",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#f7f7f7",
+  "background_color": "#f7f7f7",
+  "display": "fullscreen"
+}

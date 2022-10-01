@@ -1,0 +1,8 @@
+node_modules
+
+/.cache
+/build
+/public/_assets
+/public/build
+/public/sw.js*
+.env

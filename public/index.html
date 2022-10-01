@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- TODO: Update to your app title -->
+    <title>New Remix App</title>
+  </head>
+  <body>
+    <script>
+      function reload() {
+        location.reload();
+      }
+
+      // register the service worker and perform a page reload when successful
+      navigator.serviceWorker
+        .register("/sw.js", {
+          scope: "/",
+          type: "module",
+        })
+        .then((registration) => {
+          console.log(
+            "ServiceWorker registration successful with scope: ",
+            registration.scope
+          );
+
+          function handleStateChange(controller, state) {
+            switch (state) {
+              case "installed":
+                reload();
+                break;
+            }
+          }
+
+          if (registration.waiting) {
+            reload();
+            return;
+          }
+
+          let installing = registration.installing;
+
+          if (installing) {
+            installing.addEventListener("statechange", () => {
+              handleStateChange(installing, installing.state);
+            });
+            return;
+          }
+
+          registration.addEventListener("updatefound", (event) => {
+            installing = registration.installing || registration.waiting;
+            handleStateChange(installing, installing.state);
+          });
+        })
+        .catch((err) => {
+          console.log("ServiceWorker registration failed: ", err);
+        });
+    </script>
+  </body>
+</html>

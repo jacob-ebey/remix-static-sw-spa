@@ -25,26 +25,6 @@ self.addEventListener("fetch", (event) => {
   // it's a static asset that we can leave to the browser.
   let matches = matchRoutes(routes, url.pathname);
   if (matches && matches.length > 0) {
-    event.respondWith(
-      race(handler(request.clone()), 3000).then((response) => {
-        if (response) return response;
-
-        return fetch(request);
-      })
-    );
+    event.respondWith(handler(request));
   }
 });
-
-async function race<T>(promise: Promise<T>, timeout: number) {
-  let timeoutId;
-  let timeoutPromise = new Promise<void>((resolve) => {
-    timeoutId = setTimeout(() => {
-      timeoutId = undefined;
-      resolve();
-    }, timeout);
-  });
-  let result = await Promise.race([timeoutPromise, promise]);
-  if (timeoutId) clearTimeout(timeoutId);
-
-  return result;
-}
